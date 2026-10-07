@@ -8,7 +8,7 @@ const menuItems = [
     name: 'Crispy Spring Rolls',
     description: 'Golden fried rolls stuffed with spiced vegetables and glass noodles.',
     price: 350,
-    category: 'Starters',
+    category: '10-06-2026',
     image: 'https://images.unsplash.com/photo-1544025162-d76694265947?w=400',
     isSpecial: true,
     isAvailable: true,
@@ -18,7 +18,7 @@ const menuItems = [
     name: 'Chicken Tikka Platter',
     description: 'Juicy marinated chicken tikka served with mint chutney and salad.',
     price: 650,
-    category: 'Starters',
+    category:'10-06-2026',
     image: 'https://images.unsplash.com/photo-1565557623262-b51c2513a641?w=400',
     isSpecial: false,
     isAvailable: true,
@@ -28,7 +28,7 @@ const menuItems = [
     name: 'Garlic Bread',
     description: 'Toasted baguette with herbed garlic butter and mozzarella.',
     price: 220,
-    category: 'Starters',
+    category: '10-06-2026',
     image: 'https://images.unsplash.com/photo-1627308595229-7830a5c91f9f?w=400',
     isSpecial: false,
     isAvailable: true,
@@ -38,7 +38,7 @@ const menuItems = [
     name: 'Seekh Kebab',
     description: 'Minced beef and herb kebabs grilled on skewers with raita.',
     price: 580,
-    category: 'Starters',
+    category: '10-06-2026',
     image: 'https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?w=400',
     isSpecial: true,
     isAvailable: false,
@@ -171,6 +171,6 @@ const menuItems = [
   },
 ];
 
-export const categories = ['All', 'Starters', 'Mains', 'Desserts', 'Drinks'];
+export const categories = ['All', '10-06-2026', 'Mains', 'Desserts', 'Drinks'];
 
 export default menuItems;

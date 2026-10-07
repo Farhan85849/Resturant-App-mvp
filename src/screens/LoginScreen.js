@@ -36,6 +36,7 @@ export default function LoginScreen({ navigation }) {
   const [mode, setMode] = React.useState('login'); // 'login' | 'signup'
   const [showPassword, setShowPassword] = React.useState(false);
   const [role, setRole] = React.useState('customer');
+  const [authError, setAuthError] = React.useState(null);
 
   const loginInitial = { email: '', password: '' };
   const signupInitial = { name: '', email: '', password: '', confirmPassword: '' };
@@ -46,22 +47,26 @@ export default function LoginScreen({ navigation }) {
   const form = mode === 'login' ? loginForm : signupForm;
 
   const handleLogin = useCallback(async (values) => {
+    setAuthError(null);
     await new Promise((r) => setTimeout(r, 1000)); // simulate network
     const found = users.find(
       (u) => u.email === values.email && u.password === values.password
     );
     if (!found) {
       Alert.alert('Login Failed', 'Invalid email or password. Please try again.');
+      setAuthError('Invalid email or password. Please try again.');
       return;
     }
     login(found);
   }, [login]);
 
   const handleSignup = useCallback(async (values) => {
+    setAuthError(null);
     await new Promise((r) => setTimeout(r, 1000));
     const exists = users.find((u) => u.email === values.email);
     if (exists) {
       Alert.alert('Sign Up Failed', 'An account with this email already exists.');
+      setAuthError('An account with this email already exists.');
       return;
     }
     const newUser = {
@@ -96,7 +101,7 @@ export default function LoginScreen({ navigation }) {
       style={{ flex: 1, backgroundColor: theme.background }}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      <ScrollView contentContainerStyle={s.container}>
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={s.container} keyboardShouldPersistTaps="handled">
         <Text style={s.title}>🍽️ Saveur</Text>
         <Text style={s.subtitle}>
           {mode === 'login' ? 'Welcome back!' : 'Create your account'}
@@ -120,6 +125,9 @@ export default function LoginScreen({ navigation }) {
               secureTextEntry={!showPassword}
               placeholder="Min 8 chars, 1 digit"
               placeholderTextColor={theme.placeholder}
+              onSubmitEditing={() => {
+                if (mode === 'login') form.handleSubmit(handleLogin);
+              }}
             />
             <TouchableOpacity
               onPress={() => setShowPassword(!showPassword)}
@@ -136,6 +144,7 @@ export default function LoginScreen({ navigation }) {
             {renderField('Confirm Password', 'confirmPassword', {
               placeholder: 'Repeat password',
               secureTextEntry: !showPassword,
+              onSubmitEditing: () => form.handleSubmit(handleSignup)
             })}
             <View style={s.fieldWrap}>
               <Text style={s.label}>Role</Text>
@@ -155,6 +164,12 @@ export default function LoginScreen({ navigation }) {
             </View>
           </>
         )}
+
+        {authError ? (
+          <Text style={[s.errorText, { textAlign: 'center', marginBottom: 12, fontSize: 14 }]}>
+            {authError}
+          </Text>
+        ) : null}
 
         <TouchableOpacity
           style={[s.btn, form.isSubmitting && s.btnDisabled]}

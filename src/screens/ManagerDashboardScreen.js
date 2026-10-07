@@ -138,26 +138,22 @@ function MenuTab({ theme }) {
   const { menuItems, updateItem, addItem } = useMenu();
   const s = styles(theme);
 
-  const handlePriceEdit = (id, currentPrice) => {
-    Alert.prompt(
-      'Edit Price',
-      'Enter new price:',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Save', 
-          onPress: (val) => {
-            const parsed = parseInt(val, 10);
-            if (!isNaN(parsed) && parsed >= 0) {
-              updateItem(id, { price: parsed });
-            }
-          }
-        }
-      ],
-      'plain-text',
-      currentPrice.toString(),
-      'numeric'
-    );
+  const [editingItem, setEditingItem] = useState(null);
+  const [editPriceText, setEditPriceText] = useState('');
+
+  const handlePriceEdit = (item) => {
+    setEditingItem(item);
+    setEditPriceText(item.price.toString());
+  };
+
+  const savePriceEdit = () => {
+    if (editingItem) {
+      const parsed = parseInt(editPriceText, 10);
+      if (!isNaN(parsed) && parsed >= 0) {
+        updateItem(editingItem.id, { price: parsed });
+      }
+      setEditingItem(null);
+    }
   };
 
   const handleToggleAvailability = (item) => {
@@ -184,6 +180,32 @@ function MenuTab({ theme }) {
         <Text style={s.btnTextWhite}>+ Add New Menu Item</Text>
       </TouchableOpacity>
 
+      {/* Edit Price Modal (Cross-platform alternative to Alert.prompt) */}
+      {editingItem && (
+        <View style={StyleSheet.absoluteFillObject}>
+          <View style={{ position: 'absolute', top: 0, bottom: 0, left: 0, right: 0, backgroundColor: '#00000080', justifyContent: 'center', alignItems: 'center', zIndex: 1000, elevation: 1000 }}>
+            <View style={{ backgroundColor: theme.surface, padding: 24, borderRadius: 12, width: '80%' }}>
+              <Text style={{ fontSize: 18, fontWeight: '700', color: theme.text, marginBottom: 12 }}>Edit Price for {editingItem.name}</Text>
+              <TextInput
+                style={{ borderWidth: 1, borderColor: theme.border, padding: 12, borderRadius: 8, color: theme.text, backgroundColor: theme.inputBg, marginBottom: 16 }}
+                keyboardType="numeric"
+                value={editPriceText}
+                onChangeText={setEditPriceText}
+                autoFocus
+              />
+              <View style={{ flexDirection: 'row', justifyContent: 'flex-end', gap: 12 }}>
+                <TouchableOpacity onPress={() => setEditingItem(null)} style={{ padding: 10 }}>
+                  <Text style={{ color: theme.textSecondary, fontWeight: '600' }}>Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity onPress={savePriceEdit} style={{ backgroundColor: theme.primary, paddingVertical: 10, paddingHorizontal: 16, borderRadius: 8 }}>
+                  <Text style={{ color: '#fff', fontWeight: '700' }}>Save</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </View>
+      )}
+
       {menuItems.map(item => (
         <View key={item.id} style={s.card}>
           <View style={s.cardHeader}>
@@ -198,7 +220,7 @@ function MenuTab({ theme }) {
             </View>
           </View>
           <Text style={s.metaText}>Rs {item.price} · {item.category}</Text>
-          <TouchableOpacity style={[s.btnAccent, { alignSelf: 'flex-start', marginTop: 10 }]} onPress={() => handlePriceEdit(item.id, item.price)}>
+          <TouchableOpacity style={[s.btnAccent, { alignSelf: 'flex-start', marginTop: 10 }]} onPress={() => handlePriceEdit(item)}>
             <Text style={s.btnTextWhite}>Edit Price</Text>
           </TouchableOpacity>
         </View>
