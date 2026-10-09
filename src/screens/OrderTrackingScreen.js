@@ -1,10 +1,12 @@
 // src/screens/OrderTrackingScreen.js
-// Q10: useEffect with setInterval for auto-progression, elapsed timer, cleanup
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
-import { useOrders } from '../context/OrdersContext';
+// Polls GET /api/orders/my every 10s via setInterval.
+// Replaces A1's fake auto-advance timer with real server polling.
+
+import React, { useState, useEffect, useCallback } from 'react';
+import { View, Text, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
+import { apiFetch } from '../api/client';
 
 const STATUSES = ['Pending', 'Preparing', 'Ready', 'Served'];
 
@@ -16,82 +18,86 @@ const STATUS_EMOJI = {
   Cancelled: '❌',
 };
 
-// Auto-advance timings (demo: 10s, 20s, 30s)
-const AUTO_ADVANCE = [
-  { from: 'Pending', to: 'Preparing', delay: 10000 },
-  { from: 'Preparing', to: 'Ready', delay: 10000 },
-  { from: 'Ready', to: 'Served', delay: 10000 },
-];
+const POLL_INTERVAL = 10000; // 10 seconds
 
 export default function OrderTrackingScreen() {
-  const { orders, dispatch } = useOrders();
   const { theme } = useTheme();
   const { user } = useAuth();
   const s = styles(theme);
 
-  // Show the most recent pending/in-progress order for this user
-  const activeOrder = [...orders]
-    .reverse()
-    .find(
-      (o) =>
-        o.userId === user?.id &&
-        !['Served', 'Cancelled'].includes(o.status)
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  const fetchOrders = useCallback(async () => {
+    try {
+      const data = await apiFetch('/api/orders/my');
+      setOrders(data);
+      setError(null);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // Initial fetch + polling every 10 seconds
+  useEffect(() => {
+    fetchOrders();
+    const interval = setInterval(fetchOrders, POLL_INTERVAL);
+    return () => clearInterval(interval); // cleanup on unmount
+  }, [fetchOrders]);
+
+  if (loading) {
+    return (
+      <View style={[s.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <ActivityIndicator size="large" color={theme.primary} />
+        <Text style={{ color: theme.textSecondary, marginTop: 12 }}>Loading orders…</Text>
+      </View>
     );
+  }
 
-  const [elapsed, setElapsed] = useState(0);
+  if (error) {
+    return (
+      <View style={[s.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <Text style={{ color: theme.error, fontSize: 16, marginBottom: 16, textAlign: 'center', padding: 24 }}>
+          {error}
+        </Text>
+        <TouchableOpacity style={s.retryBtn} onPress={fetchOrders}>
+          <Text style={s.retryText}>Retry</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
 
-  // ── Elapsed-time counter (updates every second) ───────────────────────────
-  useEffect(() => {
-    if (!activeOrder) return;
-    setElapsed(0);
-    const interval = setInterval(() => setElapsed((e) => e + 1), 1000);
-    return () => clearInterval(interval); // cleanup
-  }, [activeOrder?.id]);
-
-  // ── Auto-advance status ───────────────────────────────────────────────────
-  useEffect(() => {
-    if (!activeOrder) return;
-    const rule = AUTO_ADVANCE.find((r) => r.from === activeOrder.status);
-    if (!rule) return;
-
-    const timer = setTimeout(() => {
-      dispatch({ type: 'UPDATE_STATUS', payload: { id: activeOrder.id, status: rule.to } });
-    }, rule.delay);
-
-    return () => clearTimeout(timer); // cleanup
-  }, [activeOrder?.id, activeOrder?.status, dispatch]);
-
-  const formatElapsed = (s) => {
-    const m = Math.floor(s / 60);
-    const sec = s % 60;
-    return `${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
-  };
+  // Active order: the most recent one that is not yet served/cancelled
+  const activeOrder = [...orders].find(
+    (o) => !['Served', 'Cancelled'].includes(o.status)
+  );
 
   if (!activeOrder) {
-    // Show list of all user orders
-    const myOrders = orders.filter((o) => o.userId === user?.id);
     return (
       <View style={s.container}>
-        <Text style={s.heading}>My Orders</Text>
-        {myOrders.length === 0 ? (
+        <Text style={[s.heading, { paddingHorizontal: 20, paddingTop: 20 }]}>My Orders</Text>
+        {orders.length === 0 ? (
           <View style={s.empty}>
             <Text style={{ fontSize: 40 }}>📋</Text>
             <Text style={s.emptyText}>No orders yet</Text>
           </View>
         ) : (
           <ScrollView>
-            {[...myOrders].reverse().map((order) => (
-              <View key={order.id} style={s.orderCard}>
+            {[...orders].map((order) => (
+              <View key={order._id} style={s.orderCard}>
                 <View style={s.orderHeader}>
-                  <Text style={s.orderId}>#{order.id.slice(-6)}</Text>
+                  <Text style={s.orderId}>#{order._id.slice(-6)}</Text>
                   <Text style={[s.orderStatus, { color: statusColor(order.status, theme) }]}>
                     {STATUS_EMOJI[order.status]} {order.status}
                   </Text>
                 </View>
                 <Text style={s.orderMeta}>
-                  {order.type} • {order.items.length} item{order.items.length !== 1 ? 's' : ''} • Rs {order.total}
+                  {order.items?.length} item(s) · Rs {order.total}
                 </Text>
-                <Text style={s.orderTime}>{new Date(order.timestamp).toLocaleString()}</Text>
+                <Text style={s.orderTime}>{new Date(order.createdAt).toLocaleString()}</Text>
               </View>
             ))}
           </ScrollView>
@@ -105,8 +111,10 @@ export default function OrderTrackingScreen() {
   return (
     <ScrollView style={s.container} contentContainerStyle={{ padding: 20 }}>
       <Text style={s.heading}>Tracking Order</Text>
-      <Text style={s.orderId}>Order #{activeOrder.id.slice(-6)}</Text>
-      <Text style={s.elapsed}>Elapsed: {formatElapsed(elapsed)}</Text>
+      <Text style={s.orderId}>Order #{activeOrder._id.slice(-6)}</Text>
+      <Text style={{ color: theme.textSecondary, fontSize: 13, marginBottom: 20 }}>
+        Auto-refreshes every 10s — last update: {new Date().toLocaleTimeString()}
+      </Text>
 
       {/* Step progress indicator */}
       <View style={s.stepsContainer}>
@@ -143,8 +151,8 @@ export default function OrderTrackingScreen() {
       {/* Order details */}
       <View style={s.detailCard}>
         <Text style={s.detailTitle}>Order Details</Text>
-        {activeOrder.items.map((item) => (
-          <View key={item.id} style={s.detailRow}>
+        {activeOrder.items?.map((item, i) => (
+          <View key={i} style={s.detailRow}>
             <Text style={s.detailName} numberOfLines={1}>{item.name}</Text>
             <Text style={s.detailQty}>x{item.quantity}</Text>
             <Text style={s.detailTotal}>Rs {item.price * item.quantity}</Text>
@@ -162,9 +170,9 @@ export default function OrderTrackingScreen() {
 
 function statusColor(status, theme) {
   switch (status) {
-    case 'Pending': return theme.warning;
-    case 'Preparing': return theme.accent;
-    case 'Ready': return theme.success;
+    case 'Pending': return theme.warning || '#f59e0b';
+    case 'Preparing': return theme.accent || '#8b5cf6';
+    case 'Ready': return theme.success || '#22c55e';
     case 'Served': return theme.primary;
     case 'Cancelled': return theme.error;
     default: return theme.text;
@@ -174,9 +182,8 @@ function statusColor(status, theme) {
 const styles = (theme) =>
   StyleSheet.create({
     container: { flex: 1, backgroundColor: theme.background },
-    heading: { fontSize: 24, fontWeight: '800', color: theme.text, marginBottom: 4, marginTop: 8 },
+    heading: { fontSize: 24, fontWeight: '800', color: theme.text, marginBottom: 4 },
     orderId: { fontSize: 14, color: theme.textSecondary, marginBottom: 4 },
-    elapsed: { fontSize: 28, fontWeight: '800', color: theme.primary, marginBottom: 24 },
     stepsContainer: { marginBottom: 24 },
     stepRow: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 8 },
     stepCircle: {
@@ -184,13 +191,13 @@ const styles = (theme) =>
       backgroundColor: theme.border, justifyContent: 'center', alignItems: 'center',
       marginRight: 12, marginTop: 2,
     },
-    stepDone: { backgroundColor: theme.success },
+    stepDone: { backgroundColor: theme.success || '#22c55e' },
     stepActive: { backgroundColor: theme.primary },
     stepLine: {
       position: 'absolute', left: 17, top: 40, width: 2, height: 28,
       backgroundColor: theme.border,
     },
-    stepLineDone: { backgroundColor: theme.success },
+    stepLineDone: { backgroundColor: theme.success || '#22c55e' },
     stepLabelWrap: { flex: 1 },
     stepLabel: { fontSize: 16, color: theme.text, marginTop: 6 },
     stepSub: { fontSize: 12, color: theme.textSecondary, marginTop: 2 },
@@ -213,8 +220,9 @@ const styles = (theme) =>
       shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.06, elevation: 2,
     },
     orderHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 },
-    orderId2: { fontWeight: '700', color: theme.text },
     orderStatus: { fontWeight: '700' },
     orderMeta: { fontSize: 13, color: theme.textSecondary, marginBottom: 2 },
     orderTime: { fontSize: 11, color: theme.textSecondary },
+    retryBtn: { backgroundColor: theme.primary, paddingHorizontal: 28, paddingVertical: 12, borderRadius: 10 },
+    retryText: { color: '#fff', fontWeight: '700' },
   });

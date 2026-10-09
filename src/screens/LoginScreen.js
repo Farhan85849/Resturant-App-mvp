@@ -1,15 +1,16 @@
 // src/screens/LoginScreen.js
-// Q3 (useState) + Q6 (useAuth, useForm, useTheme)
+// Connects to /api/auth/login and /api/auth/register.
+// Saves the returned { token, user } into AuthContext + AsyncStorage.
+
 import React, { useCallback } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
-  ActivityIndicator, Alert, ScrollView, KeyboardAvoidingView, Platform,
-  Switch,
+  ActivityIndicator, ScrollView, KeyboardAvoidingView, Platform,
 } from 'react-native';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import useForm from '../hooks/useForm';
-import users from '../data/users';
+import { apiFetch } from '../api/client';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const PASSWORD_RE = /^(?=.*\d).{8,}$/;
@@ -30,54 +31,48 @@ function validateSignup(values) {
   return errs;
 }
 
-export default function LoginScreen({ navigation }) {
+export default function LoginScreen() {
   const { login } = useAuth();
   const { theme } = useTheme();
-  const [mode, setMode] = React.useState('login'); // 'login' | 'signup'
+
+  const [mode, setMode] = React.useState('login');
   const [showPassword, setShowPassword] = React.useState(false);
   const [role, setRole] = React.useState('customer');
   const [authError, setAuthError] = React.useState(null);
 
-  const loginInitial = { email: '', password: '' };
-  const signupInitial = { name: '', email: '', password: '', confirmPassword: '' };
-
-  const loginForm = useForm(loginInitial, validateLogin);
-  const signupForm = useForm(signupInitial, validateSignup);
-
+  const loginForm = useForm({ email: '', password: '' }, validateLogin);
+  const signupForm = useForm({ name: '', email: '', password: '', confirmPassword: '' }, validateSignup);
   const form = mode === 'login' ? loginForm : signupForm;
 
   const handleLogin = useCallback(async (values) => {
     setAuthError(null);
-    await new Promise((r) => setTimeout(r, 1000)); // simulate network
-    const found = users.find(
-      (u) => u.email === values.email && u.password === values.password
-    );
-    if (!found) {
-      Alert.alert('Login Failed', 'Invalid email or password. Please try again.');
-      setAuthError('Invalid email or password. Please try again.');
-      return;
+    try {
+      const data = await apiFetch('/api/auth/login', {
+        method: 'POST',
+        body: JSON.stringify({ email: values.email, password: values.password }),
+      });
+      await login(data); // data = { token, user }
+    } catch (err) {
+      setAuthError(err.message || 'Login failed. Please try again.');
     }
-    login(found);
   }, [login]);
 
   const handleSignup = useCallback(async (values) => {
     setAuthError(null);
-    await new Promise((r) => setTimeout(r, 1000));
-    const exists = users.find((u) => u.email === values.email);
-    if (exists) {
-      Alert.alert('Sign Up Failed', 'An account with this email already exists.');
-      setAuthError('An account with this email already exists.');
-      return;
+    try {
+      const data = await apiFetch('/api/auth/register', {
+        method: 'POST',
+        body: JSON.stringify({
+          name: values.name,
+          email: values.email,
+          password: values.password,
+          role,
+        }),
+      });
+      await login(data); // data = { token, user }
+    } catch (err) {
+      setAuthError(err.message || 'Sign up failed. Please try again.');
     }
-    const newUser = {
-      id: `u${Date.now()}`,
-      name: values.name,
-      email: values.email,
-      password: values.password,
-      role,
-    };
-    users.push(newUser);
-    login(newUser);
   }, [login, role]);
 
   const s = styles(theme);
@@ -109,6 +104,7 @@ export default function LoginScreen({ navigation }) {
 
         {mode === 'signup' &&
           renderField('Full Name', 'name', { placeholder: 'e.g. Ali Hassan' })}
+
         {renderField('Email', 'email', {
           placeholder: 'you@example.com',
           keyboardType: 'email-address',
@@ -125,14 +121,8 @@ export default function LoginScreen({ navigation }) {
               secureTextEntry={!showPassword}
               placeholder="Min 8 chars, 1 digit"
               placeholderTextColor={theme.placeholder}
-              onSubmitEditing={() => {
-                if (mode === 'login') form.handleSubmit(handleLogin);
-              }}
             />
-            <TouchableOpacity
-              onPress={() => setShowPassword(!showPassword)}
-              style={s.eyeBtn}
-            >
+            <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={s.eyeBtn}>
               <Text style={{ color: theme.primary }}>{showPassword ? '🙈' : '👁️'}</Text>
             </TouchableOpacity>
           </View>
@@ -144,7 +134,6 @@ export default function LoginScreen({ navigation }) {
             {renderField('Confirm Password', 'confirmPassword', {
               placeholder: 'Repeat password',
               secureTextEntry: !showPassword,
-              onSubmitEditing: () => form.handleSubmit(handleSignup)
             })}
             <View style={s.fieldWrap}>
               <Text style={s.label}>Role</Text>
@@ -179,9 +168,7 @@ export default function LoginScreen({ navigation }) {
           {form.isSubmitting ? (
             <ActivityIndicator color="#fff" />
           ) : (
-            <Text style={s.btnText}>
-              {mode === 'login' ? 'Login' : 'Sign Up'}
-            </Text>
+            <Text style={s.btnText}>{mode === 'login' ? 'Login' : 'Sign Up'}</Text>
           )}
         </TouchableOpacity>
 
@@ -189,6 +176,7 @@ export default function LoginScreen({ navigation }) {
           onPress={() => {
             setMode(mode === 'login' ? 'signup' : 'login');
             setShowPassword(false);
+            setAuthError(null);
           }}
         >
           <Text style={s.toggleText}>
@@ -237,5 +225,5 @@ const styles = (theme) =>
     },
     btnDisabled: { opacity: 0.6 },
     btnText: { color: '#fff', fontWeight: '700', fontSize: 16 },
-    toggleText: { color: theme.primary, textAlign: 'center', fontWeight: '600' },
+    toggleText: { color: theme.primary, textAlign: 'center', fontWeight: '600', paddingBottom: 32 },
   });

@@ -1,30 +1,29 @@
 // src/screens/OrderSummaryScreen.js
-// Q8: useMemo for computed totals; place-order flow from Q10
+// Places real order via POST /api/orders.
+// Server computes the total from DB prices — client subtotal is just for display.
+
 import React, { useState, useMemo } from 'react';
 import {
-  View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert, TextInput,
+  View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert, TextInput, ActivityIndicator,
 } from 'react-native';
 import { useCart } from '../context/CartContext';
 import { useTheme } from '../context/ThemeContext';
-import { useAuth } from '../context/AuthContext';
-import { useOrders } from '../context/OrdersContext';
+import { apiFetch } from '../api/client';
 
-// Named rate constants (Q8 requirement)
 const SERVICE_CHARGE_RATE = 0.05;
 const SALES_TAX_RATE = 0.15;
 
 export default function OrderSummaryScreen({ navigation }) {
   const { state: cart, dispatch: cartDispatch } = useCart();
   const { theme } = useTheme();
-  const { user } = useAuth();
-  const { dispatch: ordersDispatch } = useOrders();
 
   const [orderType, setOrderType] = useState('dine-in');
-  const [pickupTime, setPickupTime] = useState('');
+  const [specialInstructions, setSpecialInstructions] = useState('');
+  const [placing, setPlacing] = useState(false);
 
   const { items, discountPercent } = cart;
 
-  // ── Q8: all totals computed via useMemo ──────────────────────────────────
+  // Client-side totals (for display only — server recomputes from DB prices)
   const { subtotal, serviceCharge, salesTax, discount, grandTotal } = useMemo(() => {
     const sub = items.reduce((s, i) => s + i.price * i.quantity, 0);
     const svc = Math.round(sub * SERVICE_CHARGE_RATE);
@@ -34,27 +33,37 @@ export default function OrderSummaryScreen({ navigation }) {
     return { subtotal: sub, serviceCharge: svc, salesTax: tax, discount: disc, grandTotal: grand };
   }, [items, discountPercent]);
 
-  const handlePlaceOrder = () => {
-    if (orderType === 'takeaway' && !pickupTime.trim()) {
-      Alert.alert('Pickup time required', 'Please enter a pickup time for your takeaway order.');
+  const handlePlaceOrder = async () => {
+    if (items.length === 0) {
+      Alert.alert('Empty Cart', 'Add some items before placing an order.');
       return;
     }
-    ordersDispatch({
-      type: 'PLACE_ORDER',
-      payload: {
-        items,
-        total: grandTotal,
-        type: orderType,
-        pickupTime: orderType === 'takeaway' ? pickupTime : null,
-        userId: user?.id,
-      },
-    });
-    cartDispatch({ type: 'CLEAR_CART' });
-    Alert.alert(
-      '🎉 Order Placed!',
-      `Your ${orderType} order has been placed. Total: Rs ${grandTotal}`,
-      [{ text: 'Track Order', onPress: () => navigation.navigate('OrderTracking') }]
-    );
+
+    setPlacing(true);
+    try {
+      await apiFetch('/api/orders', {
+        method: 'POST',
+        body: JSON.stringify({
+          items: items.map((i) => ({
+            menuItemId: i.id || i._id, // support both id formats
+            quantity: i.quantity,
+          })),
+          specialInstructions: specialInstructions.trim() || undefined,
+        }),
+      });
+
+      cartDispatch({ type: 'CLEAR_CART' });
+
+      Alert.alert(
+        '🎉 Order Placed!',
+        'Your order has been sent to the kitchen!',
+        [{ text: 'Track Order', onPress: () => navigation.navigate('OrderTracking') }]
+      );
+    } catch (err) {
+      Alert.alert('Order Failed', err.message || 'Could not place order. Please try again.');
+    } finally {
+      setPlacing(false);
+    }
   };
 
   const s = styles(theme);
@@ -73,7 +82,7 @@ export default function OrderSummaryScreen({ navigation }) {
       {/* Items list */}
       <View style={s.card}>
         {items.map((item) => (
-          <View key={item.id} style={s.itemRow}>
+          <View key={item.id || item._id} style={s.itemRow}>
             <Text style={s.itemName} numberOfLines={1}>{item.name}</Text>
             <Text style={s.itemQty}>x{item.quantity}</Text>
             <Text style={s.itemTotal}>Rs {item.price * item.quantity}</Text>
@@ -81,7 +90,7 @@ export default function OrderSummaryScreen({ navigation }) {
         ))}
       </View>
 
-      {/* Totals */}
+      {/* Totals (display only; server uses DB prices) */}
       <View style={s.card}>
         <Row label="Subtotal" value={`Rs ${subtotal}`} />
         <Row label={`Service Charge (${(SERVICE_CHARGE_RATE * 100).toFixed(0)}%)`} value={`Rs ${serviceCharge}`} />
@@ -90,7 +99,10 @@ export default function OrderSummaryScreen({ navigation }) {
           <Row label={`Promo Discount (${discountPercent}%)`} value={`− Rs ${discount}`} color={theme.success} />
         )}
         <View style={s.divider} />
-        <Row label="Grand Total" value={`Rs ${grandTotal}`} bold color={theme.primary} />
+        <Row label="Estimated Total" value={`Rs ${grandTotal}`} bold color={theme.primary} />
+        <Text style={{ fontSize: 11, color: theme.textSecondary, marginTop: 4 }}>
+          * Final total confirmed by server based on current menu prices.
+        </Text>
       </View>
 
       {/* Order type */}
@@ -109,18 +121,24 @@ export default function OrderSummaryScreen({ navigation }) {
         ))}
       </View>
 
-      {orderType === 'takeaway' && (
-        <TextInput
-          style={s.input}
-          placeholder="Pickup time (e.g. 7:30 PM)"
-          placeholderTextColor={theme.placeholder}
-          value={pickupTime}
-          onChangeText={setPickupTime}
-        />
-      )}
+      {/* Special instructions */}
+      <Text style={s.sectionLabel}>Special Instructions</Text>
+      <TextInput
+        style={s.input}
+        placeholder="e.g. No onions, extra spicy..."
+        placeholderTextColor={theme.placeholder}
+        value={specialInstructions}
+        onChangeText={setSpecialInstructions}
+        multiline
+        numberOfLines={3}
+      />
 
-      <TouchableOpacity style={s.placeBtn} onPress={handlePlaceOrder}>
-        <Text style={s.placeBtnText}>Place Order — Rs {grandTotal}</Text>
+      <TouchableOpacity style={[s.placeBtn, placing && { opacity: 0.6 }]} onPress={handlePlaceOrder} disabled={placing}>
+        {placing ? (
+          <ActivityIndicator color="#fff" />
+        ) : (
+          <Text style={s.placeBtnText}>Place Order — Rs {grandTotal}</Text>
+        )}
       </TouchableOpacity>
     </ScrollView>
   );
@@ -154,6 +172,7 @@ const styles = (theme) =>
     input: {
       backgroundColor: theme.inputBg, borderRadius: 10, padding: 12,
       fontSize: 14, color: theme.text, borderWidth: 1, borderColor: theme.border, marginBottom: 16,
+      textAlignVertical: 'top', minHeight: 80,
     },
     placeBtn: {
       backgroundColor: theme.primary, borderRadius: 14,
