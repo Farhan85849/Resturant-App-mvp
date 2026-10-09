@@ -6,7 +6,7 @@
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-export const BASE_URL = 'http://192.168.1.15:5000'; // ← Change this to your laptop's IP
+export const BASE_URL = 'http://192.168.100.22:5000'; // Laptop LAN IP
 
 /**
  * apiFetch — a thin wrapper around fetch that:

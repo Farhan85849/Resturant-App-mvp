@@ -13,11 +13,17 @@ const createReservation = async (req, res) => {
       return res.status(400).json({ message: 'tableId, date, time, and guestCount are required' });
     }
 
-    if (!isValidId(tableId)) {
-      return res.status(400).json({ message: 'Invalid table ID' });
+    let table = null;
+    if (isValidId(tableId)) {
+      table = await Table.findById(tableId);
+    }
+    if (!table) {
+      const num = parseInt(tableId, 10);
+      if (!isNaN(num)) {
+        table = await Table.findOne({ tableNumber: num });
+      }
     }
 
-    const table = await Table.findById(tableId);
     if (!table) {
       return res.status(404).json({ message: 'Table not found' });
     }
@@ -30,7 +36,7 @@ const createReservation = async (req, res) => {
 
     // Check for existing reservation at same table, date, and time
     const conflict = await Reservation.findOne({
-      table: tableId,
+      table: table._id,
       date,
       time,
       status: { $in: ['Pending', 'Confirmed'] },
@@ -44,11 +50,11 @@ const createReservation = async (req, res) => {
 
     const reservation = await Reservation.create({
       customer: req.user._id,
-      table: tableId,
+      table: table._id,
       date,
       time,
       guestCount,
-      specialRequests,
+      specialRequests: specialRequests || '',
     });
 
     await reservation.populate('table', 'tableNumber capacity location');

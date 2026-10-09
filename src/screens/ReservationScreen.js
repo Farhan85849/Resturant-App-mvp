@@ -1,7 +1,6 @@
 // src/screens/ReservationScreen.js
 // Makes and lists reservations from the real server.
 // POST /api/reservations to book, GET /api/reservations/my for history.
-// Server validates table capacity and conflict (double-booking).
 
 import React, { useState, useEffect, useCallback } from 'react';
 import {
@@ -22,28 +21,33 @@ export default function ReservationScreen() {
   const s = styles(theme);
 
   // ── Fetch tables from server ─────────────────────────────────────────
-  const fetchTables = useCallback(() => apiFetch('/api/menu').then(() => apiFetch('/api/reservations/my').catch(() => [])), []);
-
-  // ── Fetch available tables separately ───────────────────────────────
   const [tables, setTables] = useState([]);
-  useEffect(() => {
-    apiFetch('/api/health').catch(() => {});
-    // We don't have a GET /api/tables endpoint, so we just fetch tables from
-    // any available table listing. The server's reservation route validates capacity.
-    // For the UI we hardcode the 6 seeded tables.
-    setTables([
-      { _id: null, tableNumber: 1, capacity: 2, location: 'Window' },
-      { _id: null, tableNumber: 2, capacity: 4, location: 'Main Hall' },
-      { _id: null, tableNumber: 3, capacity: 4, location: 'Main Hall' },
-      { _id: null, tableNumber: 4, capacity: 6, location: 'Garden' },
-      { _id: null, tableNumber: 5, capacity: 8, location: 'Private Room' },
-      { _id: null, tableNumber: 6, capacity: 2, location: 'Bar' },
-    ]);
-    // Fetch real table IDs from server
-    apiFetch('/api/reservations/my').catch(() => {});
+  const [loadingTables, setLoadingTables] = useState(true);
+
+  const fetchTables = useCallback(async () => {
+    try {
+      const data = await apiFetch('/api/tables');
+      setTables(data);
+    } catch (_) {
+      // Fallback table list if network or server seeding is fresh
+      setTables([
+        { _id: '1', tableNumber: 1, capacity: 2, location: 'Window' },
+        { _id: '2', tableNumber: 2, capacity: 4, location: 'Main Hall' },
+        { _id: '3', tableNumber: 3, capacity: 4, location: 'Main Hall' },
+        { _id: '4', tableNumber: 4, capacity: 6, location: 'Garden' },
+        { _id: '5', tableNumber: 5, capacity: 8, location: 'Private Room' },
+        { _id: '6', tableNumber: 6, capacity: 2, location: 'Bar' },
+      ]);
+    } finally {
+      setLoadingTables(false);
+    }
   }, []);
 
-  // ── Fetch my reservations ─────────────────────────────────────────────
+  useEffect(() => {
+    fetchTables();
+  }, [fetchTables]);
+
+  // ── Fetch my reservations from server ────────────────────────────────
   const fetchMyReservations = useCallback(() => apiFetch('/api/reservations/my'), []);
   const { data: myReservations, loading: loadingRes, refetch: refetchReservations } = useApi(fetchMyReservations, []);
 
@@ -52,17 +56,10 @@ export default function ReservationScreen() {
   const [selectedTime, setSelectedTime] = useState(null);
   const [guestCount, setGuestCount] = useState(2);
   const [specialRequests, setSpecialRequests] = useState('');
-  const [selectedTableId, setSelectedTableId] = useState(null);
+  const [selectedTable, setSelectedTable] = useState(null);
   const [formError, setFormError] = useState(null);
   const [placing, setPlacing] = useState(false);
   const [showModal, setShowModal] = useState(false);
-
-  // Fetch real table IDs on mount by looking at a temp reservation call
-  const [realTables, setRealTables] = useState([]);
-  useEffect(() => {
-    // Try to get tables from a tables endpoint (may not exist), fallback to seeded list
-    apiFetch('/api/tables').then(setRealTables).catch(() => {});
-  }, []);
 
   const dates = Array.from({ length: 14 }, (_, i) => {
     const d = new Date();
@@ -70,41 +67,40 @@ export default function ReservationScreen() {
     return d.toISOString().split('T')[0];
   });
 
-  const availableTables = (realTables.length > 0 ? realTables : tables).filter(
-    (t) => t.capacity >= guestCount
-  );
+  const availableTables = tables.filter((t) => t.capacity >= guestCount);
 
   const validate = () => {
     if (!selectedDate) { setFormError('Please select a date.'); return false; }
     if (!selectedTime) { setFormError('Please select a time.'); return false; }
-    if (!selectedTableId) { setFormError('Please select a table.'); return false; }
+    if (!selectedTable) { setFormError('Please select a table.'); return false; }
     setFormError(null);
     return true;
   };
 
   const handleReserve = async () => {
-    if (!validate()) return;
     setPlacing(true);
     try {
       await apiFetch('/api/reservations', {
         method: 'POST',
         body: JSON.stringify({
-          tableId: selectedTableId,
+          tableId: selectedTable._id || selectedTable.tableNumber,
           date: selectedDate,
           time: selectedTime,
           guestCount,
           specialRequests: specialRequests.trim() || undefined,
         }),
       });
+
       setShowModal(false);
-      refetchReservations();
-      Alert.alert('Booked! 🎉', 'Your table has been reserved. The manager will confirm shortly.');
+      await refetchReservations();
+      Alert.alert('Booked! 🎉', 'Your table reservation has been saved to the database!');
+
       // Reset form
       setSelectedDate(null);
       setSelectedTime(null);
       setGuestCount(2);
       setSpecialRequests('');
-      setSelectedTableId(null);
+      setSelectedTable(null);
     } catch (err) {
       setShowModal(false);
       Alert.alert('Booking Failed', err.message || 'Could not place reservation.');
@@ -191,24 +187,29 @@ export default function ReservationScreen() {
 
       {/* Table selection */}
       <Text style={s.label}>Select Table (for {guestCount} guests)</Text>
-      {availableTables.length === 0 ? (
+      {loadingTables ? (
+        <ActivityIndicator color={theme.primary} />
+      ) : availableTables.length === 0 ? (
         <Text style={{ color: theme.error, marginBottom: 8 }}>No tables available for {guestCount} guests.</Text>
       ) : (
         <View style={s.slotsGrid}>
-          {availableTables.map((table) => (
-            <TouchableOpacity
-              key={table._id || table.tableNumber}
-              style={[s.slotChip, selectedTableId === (table._id || table.tableNumber) && s.slotChipActive, { width: '45%' }]}
-              onPress={() => setSelectedTableId(table._id || table.tableNumber)}
-            >
-              <Text style={[s.slotText, selectedTableId === (table._id || table.tableNumber) && s.slotTextActive]}>
-                Table #{table.tableNumber}
-              </Text>
-              <Text style={{ fontSize: 11, color: selectedTableId === (table._id || table.tableNumber) ? '#fff' : theme.textSecondary }}>
-                {table.location} · seats {table.capacity}
-              </Text>
-            </TouchableOpacity>
-          ))}
+          {availableTables.map((table) => {
+            const isSelected = selectedTable?.tableNumber === table.tableNumber;
+            return (
+              <TouchableOpacity
+                key={table._id || table.tableNumber}
+                style={[s.slotChip, isSelected && s.slotChipActive, { width: '45%' }]}
+                onPress={() => setSelectedTable(table)}
+              >
+                <Text style={[s.slotText, isSelected && s.slotTextActive]}>
+                  Table #{table.tableNumber}
+                </Text>
+                <Text style={{ fontSize: 11, color: isSelected ? '#fff' : theme.textSecondary }}>
+                  {table.location} · seats {table.capacity}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
         </View>
       )}
 
@@ -232,18 +233,18 @@ export default function ReservationScreen() {
         <Text style={s.reserveBtnText}>Reserve Table</Text>
       </TouchableOpacity>
 
-      {/* My Reservations */}
+      {/* My Reservations List */}
       <Text style={[s.heading, { marginTop: 32 }]}>My Reservations</Text>
       {loadingRes ? (
         <ActivityIndicator color={theme.primary} />
-      ) : (myReservations || []).length === 0 ? (
-        <Text style={{ color: theme.textSecondary }}>No reservations yet.</Text>
+      ) : !myReservations || myReservations.length === 0 ? (
+        <Text style={{ color: theme.textSecondary }}>No reservations found in database.</Text>
       ) : (
-        [...(myReservations || [])].map((res) => (
+        myReservations.map((res) => (
           <View key={res._id} style={s.resCard}>
             <View style={s.resHeader}>
               <Text style={s.resTitle}>
-                Table #{res.table?.tableNumber} — {res.table?.location}
+                Table #{res.table?.tableNumber || '?'} — {res.table?.location || 'Main Hall'}
               </Text>
               <Text style={[
                 s.resBadge,
@@ -272,6 +273,7 @@ export default function ReservationScreen() {
             <InfoRow label="Date" value={selectedDate || '-'} theme={theme} />
             <InfoRow label="Time" value={selectedTime || '-'} theme={theme} />
             <InfoRow label="Guests" value={`${guestCount}`} theme={theme} />
+            <InfoRow label="Table" value={`Table #${selectedTable?.tableNumber} (${selectedTable?.location})`} theme={theme} />
             <InfoRow label="Requests" value={specialRequests || 'None'} theme={theme} />
             <View style={s.modalBtns}>
               <TouchableOpacity style={s.modalCancelBtn} onPress={() => setShowModal(false)}>

@@ -75,3 +75,4 @@ Saveur is a full-stack mobile restaurant platform consisting of a React Native m
 | GET | `/api/reservations/my` | Customer | None | List of customer's reservations |
 | GET | `/api/reservations` | Manager Only | None | List of all system reservations |
 | PATCH | `/api/reservations/:id` | Manager Only | status (Confirmed, Declined, Cancelled) | Updated reservation object |
+
