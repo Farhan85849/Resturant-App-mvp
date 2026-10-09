@@ -5,3 +5,4 @@ const { getTables } = require('../controllers/tableController');
 router.get('/', getTables);
 
 module.exports = router;
+

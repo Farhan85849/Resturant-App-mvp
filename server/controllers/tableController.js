@@ -11,3 +11,4 @@ const getTables = async (req, res) => {
 };
 
 module.exports = { getTables };
+

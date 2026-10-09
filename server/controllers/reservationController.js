@@ -24,8 +24,14 @@ const createReservation = async (req, res) => {
       }
     }
 
+    // Auto-create table if seed was not run yet
     if (!table) {
-      return res.status(404).json({ message: 'Table not found' });
+      const num = parseInt(tableId, 10) || 1;
+      table = await Table.create({
+        tableNumber: num,
+        capacity: Math.max(guestCount, 4),
+        location: 'Main Hall',
+      });
     }
 
     if (guestCount > table.capacity) {

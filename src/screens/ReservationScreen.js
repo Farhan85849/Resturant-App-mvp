@@ -16,28 +16,33 @@ const TIME_SLOTS = [
   '18:00', '18:30', '19:00', '19:30', '20:00', '20:30',
 ];
 
+const DEFAULT_TABLES = [
+  { _id: '1', tableNumber: 1, capacity: 2, location: 'Window' },
+  { _id: '2', tableNumber: 2, capacity: 4, location: 'Main Hall' },
+  { _id: '3', tableNumber: 3, capacity: 4, location: 'Main Hall' },
+  { _id: '4', tableNumber: 4, capacity: 6, location: 'Garden' },
+  { _id: '5', tableNumber: 5, capacity: 8, location: 'Private Room' },
+  { _id: '6', tableNumber: 6, capacity: 2, location: 'Bar' },
+];
+
 export default function ReservationScreen() {
   const { theme } = useTheme();
   const s = styles(theme);
 
   // ── Fetch tables from server ─────────────────────────────────────────
-  const [tables, setTables] = useState([]);
+  const [tables, setTables] = useState(DEFAULT_TABLES);
   const [loadingTables, setLoadingTables] = useState(true);
 
   const fetchTables = useCallback(async () => {
     try {
       const data = await apiFetch('/api/tables');
-      setTables(data);
+      if (Array.isArray(data) && data.length > 0) {
+        setTables(data);
+      } else {
+        setTables(DEFAULT_TABLES);
+      }
     } catch (_) {
-      // Fallback table list if network or server seeding is fresh
-      setTables([
-        { _id: '1', tableNumber: 1, capacity: 2, location: 'Window' },
-        { _id: '2', tableNumber: 2, capacity: 4, location: 'Main Hall' },
-        { _id: '3', tableNumber: 3, capacity: 4, location: 'Main Hall' },
-        { _id: '4', tableNumber: 4, capacity: 6, location: 'Garden' },
-        { _id: '5', tableNumber: 5, capacity: 8, location: 'Private Room' },
-        { _id: '6', tableNumber: 6, capacity: 2, location: 'Bar' },
-      ]);
+      setTables(DEFAULT_TABLES);
     } finally {
       setLoadingTables(false);
     }
