@@ -101,15 +101,10 @@ function MainTabs() {
 }
 
 export default function AppNavigator() {
-  const { user } = useAuth();
+  const { user, isLoading } = useAuth();
   const { theme } = useTheme();
   
-  // Q10: Show loading screen until local storage is loaded to prevent empty data flashes
-  const { loaded: ordersLoaded } = useOrders();
-  const { loaded: resLoaded } = useReservations();
-  const { loaded: menuLoaded } = useMenu();
-
-  if (user && (!ordersLoaded || !resLoaded || !menuLoaded)) {
+  if (isLoading) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: theme.background }}>
         <ActivityIndicator size="large" color={theme.primary} />

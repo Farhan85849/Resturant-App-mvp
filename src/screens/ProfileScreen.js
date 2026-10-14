@@ -1,7 +1,5 @@
-// src/screens/ProfileScreen.js
-// Q6: shows user info and theme toggle
 import React from 'react';
-import { View, Text, Switch, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { View, Text, Switch, TouchableOpacity, StyleSheet, Alert, Platform } from 'react-native';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 
@@ -11,6 +9,12 @@ export default function ProfileScreen() {
   const s = styles(theme);
 
   const handleLogout = () => {
+    if (Platform.OS === 'web') {
+      if (typeof window !== 'undefined' && window.confirm('Are you sure you want to logout?')) {
+        logout();
+      }
+      return;
+    }
     Alert.alert('Logout', 'Are you sure you want to logout?', [
       { text: 'Cancel', style: 'cancel' },
       { text: 'Logout', style: 'destructive', onPress: logout },

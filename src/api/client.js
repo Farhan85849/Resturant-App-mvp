@@ -4,9 +4,17 @@
 // When running on the Android emulator, use http://10.0.2.2:5000.
 // For web (browser on same machine), http://localhost:5000 works.
 
+import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-export const BASE_URL = 'http://192.168.100.22:5000'; // Laptop LAN IP
+// Current Laptop LAN IP for physical mobile devices running Expo Go
+const LAN_IP = '192.168.100.148';
+
+// On Web browser (localhost:8081), connect directly to localhost:5000
+// On physical mobile phones with Expo Go, connect to laptop's LAN IP
+export const BASE_URL = Platform.OS === 'web'
+  ? (typeof window !== 'undefined' && window.location?.hostname ? `http://${window.location.hostname}:5000` : 'http://localhost:5000')
+  : `http://${LAN_IP}:5000`;
 
 /**
  * apiFetch — a thin wrapper around fetch that:
