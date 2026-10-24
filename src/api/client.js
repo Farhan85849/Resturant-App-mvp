@@ -22,7 +22,7 @@ const getDevHost = () => {
     const host = scriptURL.split('://')[1]?.split('/')[0]?.split(':')[0];
     if (host) return host;
   }
-  return '192.168.0.159';
+  return '192.168.100.150';
 };
 
 export const BASE_URL = `http://${getDevHost()}:5000`;
