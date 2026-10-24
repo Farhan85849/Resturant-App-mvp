@@ -78,30 +78,33 @@ export default function OrderTrackingScreen() {
   if (!activeOrder) {
     return (
       <View style={s.container}>
-        <Text style={[s.heading, { paddingHorizontal: 20, paddingTop: 20 }]}>My Orders</Text>
-        {orders.length === 0 ? (
-          <View style={s.empty}>
-            <Text style={{ fontSize: 40 }}>📋</Text>
-            <Text style={s.emptyText}>No orders yet</Text>
-          </View>
-        ) : (
-          <ScrollView>
-            {[...orders].map((order) => (
-              <View key={order._id} style={s.orderCard}>
-                <View style={s.orderHeader}>
-                  <Text style={s.orderId}>#{order._id.slice(-6)}</Text>
-                  <Text style={[s.orderStatus, { color: statusColor(order.status, theme) }]}>
-                    {STATUS_EMOJI[order.status]} {order.status}
+        <View style={s.responsiveContainer}>
+          <Text style={[s.heading, { paddingHorizontal: 20, paddingTop: 20 }]}>My Orders</Text>
+          {orders.length === 0 ? (
+            <View style={s.empty}>
+              <Text style={{ fontSize: 40 }}>📋</Text>
+              <Text style={s.emptyTitle}>No orders placed yet</Text>
+              <Text style={s.emptyText}>When you place an order, you can track its live kitchen progress here.</Text>
+            </View>
+          ) : (
+            <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
+              {[...orders].map((order) => (
+                <View key={order._id} style={s.orderCard}>
+                  <View style={s.orderHeader}>
+                    <Text style={s.orderId}>Order #{order._id.slice(-6)}</Text>
+                    <Text style={[s.orderStatus, { color: statusColor(order.status, theme) }]}>
+                      {STATUS_EMOJI[order.status]} {order.status}
+                    </Text>
+                  </View>
+                  <Text style={s.orderMeta}>
+                    {order.items?.length} dish(es) · Total: Rs {order.total}
                   </Text>
+                  <Text style={s.orderTime}>Placed on: {new Date(order.createdAt).toLocaleString()}</Text>
                 </View>
-                <Text style={s.orderMeta}>
-                  {order.items?.length} item(s) · Rs {order.total}
-                </Text>
-                <Text style={s.orderTime}>{new Date(order.createdAt).toLocaleString()}</Text>
-              </View>
-            ))}
-          </ScrollView>
-        )}
+              ))}
+            </ScrollView>
+          )}
+        </View>
       </View>
     );
   }
@@ -109,59 +112,62 @@ export default function OrderTrackingScreen() {
   const currentIndex = STATUSES.indexOf(activeOrder.status);
 
   return (
-    <ScrollView style={s.container} contentContainerStyle={{ padding: 20 }}>
-      <Text style={s.heading}>Tracking Order</Text>
-      <Text style={s.orderId}>Order #{activeOrder._id.slice(-6)}</Text>
-      <Text style={{ color: theme.textSecondary, fontSize: 13, marginBottom: 20 }}>
-        Auto-refreshes every 10s — last update: {new Date().toLocaleTimeString()}
-      </Text>
+    <ScrollView style={s.container} contentContainerStyle={{ padding: 20, paddingBottom: 60 }}>
+      <View style={s.responsiveContainer}>
+        <Text style={s.heading}>Live Order Tracking</Text>
+        <Text style={s.orderId}>Order #{activeOrder._id.slice(-6)}</Text>
+        <Text style={{ color: theme.textSecondary, fontSize: 13, marginBottom: 20 }}>
+          🔄 Auto-syncing with kitchen every 10s • Last update: {new Date().toLocaleTimeString()}
+        </Text>
 
-      {/* Step progress indicator */}
-      <View style={s.stepsContainer}>
-        {STATUSES.map((status, idx) => {
-          const done = idx < currentIndex;
-          const active = idx === currentIndex;
-          return (
-            <View key={status} style={s.stepRow}>
-              <View style={[s.stepCircle, done && s.stepDone, active && s.stepActive]}>
-                <Text style={{ color: done || active ? '#fff' : theme.textSecondary, fontWeight: '700' }}>
-                  {done ? '✓' : idx + 1}
-                </Text>
-              </View>
-              {idx < STATUSES.length - 1 && (
-                <View style={[s.stepLine, done && s.stepLineDone]} />
-              )}
-              <View style={s.stepLabelWrap}>
-                <Text style={[s.stepLabel, active && { color: theme.primary, fontWeight: '700' }]}>
-                  {STATUS_EMOJI[status]} {status}
-                </Text>
-                {active && (
-                  <Text style={s.stepSub}>
-                    {status === 'Pending' && 'Order received, awaiting kitchen...'}
-                    {status === 'Preparing' && 'Our chefs are cooking your meal!'}
-                    {status === 'Ready' && 'Your order is ready for pickup/serving!'}
+        {/* Step progress indicator */}
+        <View style={s.stepsContainer}>
+          {STATUSES.map((status, idx) => {
+            const done = idx < currentIndex;
+            const active = idx === currentIndex;
+            return (
+              <View key={status} style={s.stepRow}>
+                <View style={[s.stepCircle, done && s.stepDone, active && s.stepActive]}>
+                  <Text style={{ color: done || active ? '#fff' : theme.textSecondary, fontWeight: '700' }}>
+                    {done ? '✓' : idx + 1}
                   </Text>
+                </View>
+                {idx < STATUSES.length - 1 && (
+                  <View style={[s.stepLine, done && s.stepLineDone]} />
                 )}
+                <View style={s.stepLabelWrap}>
+                  <Text style={[s.stepLabel, active && { color: theme.primary, fontWeight: '800' }]}>
+                    {STATUS_EMOJI[status]} {status}
+                  </Text>
+                  {active && (
+                    <Text style={s.stepSub}>
+                      {status === 'Pending' && 'Order received, kitchen confirming ingredients...'}
+                      {status === 'Preparing' && 'Master chefs are actively cooking your meal!'}
+                      {status === 'Ready' && 'Your meal is prepared and ready for service!'}
+                      {status === 'Served' && 'Bon appétit! Enjoy your dining experience.'}
+                    </Text>
+                  )}
+                </View>
               </View>
-            </View>
-          );
-        })}
-      </View>
+            );
+          })}
+        </View>
 
-      {/* Order details */}
-      <View style={s.detailCard}>
-        <Text style={s.detailTitle}>Order Details</Text>
-        {activeOrder.items?.map((item, i) => (
-          <View key={i} style={s.detailRow}>
-            <Text style={s.detailName} numberOfLines={1}>{item.name}</Text>
-            <Text style={s.detailQty}>x{item.quantity}</Text>
-            <Text style={s.detailTotal}>Rs {item.price * item.quantity}</Text>
+        {/* Order details */}
+        <View style={s.detailCard}>
+          <Text style={s.detailTitle}>Order Receipt Summary</Text>
+          {activeOrder.items?.map((item, i) => (
+            <View key={i} style={s.detailRow}>
+              <Text style={s.detailName} numberOfLines={1}>{item.name}</Text>
+              <Text style={s.detailQty}>x{item.quantity}</Text>
+              <Text style={s.detailTotal}>Rs {item.price * item.quantity}</Text>
+            </View>
+          ))}
+          <View style={s.detailDivider} />
+          <View style={s.detailRow}>
+            <Text style={[s.detailName, { fontWeight: '800', color: theme.primary, fontSize: 16 }]}>Total Paid</Text>
+            <Text style={[s.detailTotal, { fontWeight: '900', color: theme.primary, fontSize: 18 }]}>Rs {activeOrder.total}</Text>
           </View>
-        ))}
-        <View style={s.detailDivider} />
-        <View style={s.detailRow}>
-          <Text style={[s.detailName, { fontWeight: '800', color: theme.primary }]}>Total</Text>
-          <Text style={[s.detailTotal, { fontWeight: '800', color: theme.primary }]}>Rs {activeOrder.total}</Text>
         </View>
       </View>
     </ScrollView>
@@ -182,8 +188,14 @@ function statusColor(status, theme) {
 const styles = (theme) =>
   StyleSheet.create({
     container: { flex: 1, backgroundColor: theme.background },
-    heading: { fontSize: 24, fontWeight: '800', color: theme.text, marginBottom: 4 },
-    orderId: { fontSize: 14, color: theme.textSecondary, marginBottom: 4 },
+    responsiveContainer: {
+      width: '100%',
+      maxWidth: 760,
+      alignSelf: 'center',
+    },
+    heading: { fontSize: 26, fontWeight: '900', color: theme.text, marginBottom: 4, letterSpacing: -0.5 },
+    orderId: { fontSize: 14, color: theme.textSecondary, marginBottom: 4, fontWeight: '600' },
+    emptyTitle: { fontSize: 18, fontWeight: '800', color: theme.text, marginTop: 8 },
     stepsContainer: { marginBottom: 24 },
     stepRow: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 8 },
     stepCircle: {

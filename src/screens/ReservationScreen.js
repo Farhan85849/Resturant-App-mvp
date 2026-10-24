@@ -140,10 +140,12 @@ export default function ReservationScreen() {
   };
 
   return (
-    <ScrollView style={s.container} contentContainerStyle={{ padding: 20 }}>
-      <Text style={s.heading}>Table Reservation</Text>
+    <ScrollView style={s.container} contentContainerStyle={{ padding: 20, paddingBottom: 60 }}>
+      <View style={s.responsiveContainer}>
+        <Text style={s.heading}>Table Reservation</Text>
+        <Text style={s.subheading}>Reserve your dining experience with instant confirmation</Text>
 
-      {/* Date picker */}
+        {/* Date picker */}
       <Text style={s.label}>Select Date</Text>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={s.dateScroll}>
         {dates.map((date) => {
@@ -291,6 +293,7 @@ export default function ReservationScreen() {
           </View>
         </View>
       </Modal>
+      </View>
     </ScrollView>
   );
 }
@@ -307,7 +310,13 @@ function InfoRow({ label, value, theme }) {
 const styles = (theme) =>
   StyleSheet.create({
     container: { flex: 1, backgroundColor: theme.background },
-    heading: { fontSize: 22, fontWeight: '800', color: theme.text, marginBottom: 16 },
+    responsiveContainer: {
+      width: '100%',
+      maxWidth: 780,
+      alignSelf: 'center',
+    },
+    heading: { fontSize: 26, fontWeight: '900', color: theme.text, letterSpacing: -0.5 },
+    subheading: { fontSize: 13, color: theme.textSecondary, fontWeight: '600', marginTop: 2, marginBottom: 8 },
     label: { fontSize: 14, fontWeight: '700', color: theme.text, marginBottom: 8, marginTop: 16 },
     dateScroll: { maxHeight: 80, marginBottom: 4 },
     dateChip: {

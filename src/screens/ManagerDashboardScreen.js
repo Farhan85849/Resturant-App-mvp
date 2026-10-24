@@ -20,16 +20,20 @@ export default function ManagerDashboardScreen() {
 
   return (
     <View style={s.container}>
-      <View style={s.tabBar}>
-        <TabButton id="orders" label="Orders" activeTab={activeTab} setActiveTab={setActiveTab} theme={theme} />
-        <TabButton id="reservations" label="Reservations" activeTab={activeTab} setActiveTab={setActiveTab} theme={theme} />
-        <TabButton id="menu" label="Menu" activeTab={activeTab} setActiveTab={setActiveTab} theme={theme} />
+      <View style={s.tabBarWrapper}>
+        <View style={s.tabBar}>
+          <TabButton id="orders" label="📦 Orders" activeTab={activeTab} setActiveTab={setActiveTab} theme={theme} />
+          <TabButton id="reservations" label="📅 Reservations" activeTab={activeTab} setActiveTab={setActiveTab} theme={theme} />
+          <TabButton id="menu" label="🍽️ Menu Control" activeTab={activeTab} setActiveTab={setActiveTab} theme={theme} />
+        </View>
       </View>
 
       <ScrollView contentContainerStyle={s.content}>
-        {activeTab === 'orders' && <OrdersTab theme={theme} />}
-        {activeTab === 'reservations' && <ReservationsTab theme={theme} />}
-        {activeTab === 'menu' && <MenuTab theme={theme} />}
+        <View style={s.responsiveContainer}>
+          {activeTab === 'orders' && <OrdersTab theme={theme} />}
+          {activeTab === 'reservations' && <ReservationsTab theme={theme} />}
+          {activeTab === 'menu' && <MenuTab theme={theme} />}
+        </View>
       </ScrollView>
     </View>
   );
@@ -278,12 +282,25 @@ function MenuTab({ theme }) {
 
 const styles = (theme) => StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.background },
-  tabBar: { flexDirection: 'row', backgroundColor: theme.surface, elevation: 2 },
-  content: { padding: 16 },
+  tabBarWrapper: {
+    backgroundColor: theme.surface,
+    alignItems: 'center',
+    width: '100%',
+    borderBottomWidth: 1,
+    borderBottomColor: theme.border || '#e2e8f0',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOpacity: 0.05,
+    shadowOffset: { width: 0, height: 2 },
+  },
+  tabBar: { flexDirection: 'row', width: '100%', maxWidth: 860 },
+  content: { padding: 16, alignItems: 'center' },
+  responsiveContainer: { width: '100%', maxWidth: 860 },
   emptyText: { color: theme.textSecondary, textAlign: 'center', marginTop: 40, fontSize: 16 },
   card: {
-    backgroundColor: theme.card, borderRadius: 12, padding: 16, marginBottom: 12,
-    elevation: 2, shadowColor: '#000', shadowOpacity: 0.1, shadowOffset: { width: 0, height: 1 },
+    backgroundColor: theme.card, borderRadius: 14, padding: 18, marginBottom: 14,
+    borderWidth: 1, borderColor: theme.border || '#f1f5f9',
+    elevation: 2, shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 8, shadowOffset: { width: 0, height: 3 },
   },
   cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
   cardTitle: { color: theme.text, fontSize: 16, fontWeight: '700', flex: 1, marginRight: 8 },

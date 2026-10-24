@@ -1,40 +1,46 @@
 // src/api/client.js
-// Central API client — BASE_URL is the only place to update the server address.
-// When running on a physical phone, use your laptop's LAN IP (e.g. http://192.168.1.15:5000).
-// When running on the Android emulator, use http://10.0.2.2:5000.
-// For web (browser on same machine), http://localhost:5000 works.
+// Central API client — automatically resolves backend server address
+// Works seamlessly across Web, Physical Phone (Expo Go), and Emulators
 
 import { Platform, NativeModules } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// Automatically detect host:
-// - On Web: uses window.location.hostname (e.g. localhost)
-// - On Mobile: dynamically extracts the Metro server host IP (e.g. 192.168.0.159)
-// - Fallback: current laptop IP
-const getDevHost = () => {
+// Known laptop fallback IP
+const FALLBACK_IP = '192.168.100.150';
+
+export const getBaseUrl = () => {
   if (Platform.OS === 'web') {
-    return typeof window !== 'undefined' && window.location?.hostname
-      ? window.location.hostname
-      : 'localhost';
+    if (typeof window !== 'undefined' && window.location?.hostname) {
+      return `http://${window.location.hostname}:5000`;
+    }
+    return 'http://localhost:5000';
   }
+
+  // On physical mobile device with Expo Go:
+  // Extract host IP dynamically from Metro bundle scriptURL
   const scriptURL = NativeModules.SourceCode?.scriptURL;
   if (scriptURL) {
     const host = scriptURL.split('://')[1]?.split('/')[0]?.split(':')[0];
-    if (host) return host;
+    if (host && host !== 'localhost' && host !== '127.0.0.1') {
+      return `http://${host}:5000`;
+    }
   }
-  return '192.168.100.150';
+
+  return `http://${FALLBACK_IP}:5000`;
 };
 
-export const BASE_URL = `http://${getDevHost()}:5000`;
+export const BASE_URL = getBaseUrl();
 
 /**
  * apiFetch — a thin wrapper around fetch that:
+ *  - Dynamically resolves backend base URL
  *  - Sets Content-Type: application/json
- *  - Reads the stored JWT and adds Authorization: Bearer <token>
- *  - Throws an Error with the server's message on non-2xx responses
+ *  - Reads stored JWT and adds Authorization: Bearer <token>
+ *  - Throws an Error with server's message on non-2xx responses
  */
 export async function apiFetch(path, options = {}) {
   const token = await AsyncStorage.getItem('token');
+  const baseUrl = getBaseUrl();
 
   const headers = {
     'Content-Type': 'application/json',
@@ -42,12 +48,12 @@ export async function apiFetch(path, options = {}) {
     ...options.headers,
   };
 
-  const response = await fetch(`${BASE_URL}${path}`, {
+  const response = await fetch(`${baseUrl}${path}`, {
     ...options,
     headers,
   });
 
-  // Parse the body (always JSON from our server)
+  // Parse body (always JSON from server)
   const data = await response.json().catch(() => ({}));
 
   if (!response.ok) {
@@ -57,4 +63,3 @@ export async function apiFetch(path, options = {}) {
 
   return data;
 }
-
