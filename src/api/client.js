@@ -6,7 +6,7 @@ import { Platform, NativeModules } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Known laptop fallback IP
-const FALLBACK_IP = '192.168.100.150';
+const FALLBACK_IP = '192.168.100.83';
 
 export const getBaseUrl = () => {
   if (Platform.OS === 'web') {

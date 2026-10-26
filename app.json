@@ -1,28 +1,44 @@
 {
   "expo": {
-    "name": "expo-app",
+    "name": "Saveur Restaurant",
     "slug": "expo-app",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "automatic",
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#E63946"
+    },
     "ios": {
       "supportsTablet": true
     },
     "android": {
+      "package": "com.saveur.restaurantapp",
+      "versionCode": 1,
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
+        "backgroundColor": "#E63946",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
-      }
+      },
+      "permissions": [
+        "INTERNET"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
       "expo-status-bar",
-      "expo-font"
-    ]
+      "expo-font",
+      "./plugins/withCleartextTraffic"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "7b4c7f76-3212-47cc-adc8-f054d482f72a"
+      }
+    }
   }
 }
