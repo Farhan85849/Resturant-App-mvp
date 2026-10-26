@@ -5,8 +5,8 @@
 import { Platform, NativeModules } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// Known laptop fallback IP
-const FALLBACK_IP = '192.168.100.83';
+// Mobile Hotspot connected laptop IP
+const FALLBACK_IP = '10.237.20.131';
 
 export const getBaseUrl = () => {
   if (Platform.OS === 'web') {
