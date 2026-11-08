@@ -13,6 +13,7 @@ import MenuItemCard from '../components/MenuItemCard';
 import useDebounce from '../hooks/useDebounce';
 import useApi from '../hooks/useApi';
 import { apiFetch } from '../api/client';
+import localMenuItems from '../data/menu';
 
 const CATEGORIES = ['All', 'Starters', 'Mains', 'Desserts', 'Drinks'];
 const SORT_OPTIONS = [
@@ -51,8 +52,11 @@ export default function MenuScreen({ navigation }) {
 
   // Client-side instant filter and sort
   const displayedItems = useMemo(() => {
-    if (!menuItems) return [];
-    let items = [...menuItems];
+    // If backend data is available, use it; otherwise fallback to local menu items
+    const sourceItems = (Array.isArray(menuItems) && menuItems.length > 0)
+      ? menuItems
+      : localMenuItems;
+    let items = [...sourceItems];
 
     if (selectedCategory !== 'All') {
       items = items.filter((i) => i.category === selectedCategory);
@@ -96,13 +100,16 @@ export default function MenuScreen({ navigation }) {
 
   const s = styles(theme, width);
 
-  if (loading && !refreshing) {
-    return (
-      <View style={[s.centered, { backgroundColor: theme.background }]}>
-        <ActivityIndicator size="large" color={theme.primary} />
-        <Text style={s.loadingText}>Crafting culinary menu…</Text>
-      </View>
-    );
+  if (loading && !refreshing && (!menuItems || menuItems.length === 0)) {
+    // If we have local mock items, don't get stuck indefinitely in full-page loading
+    if (!localMenuItems || localMenuItems.length === 0) {
+      return (
+        <View style={[s.centered, { backgroundColor: theme.background }]}>
+          <ActivityIndicator size="large" color={theme.primary} />
+          <Text style={s.loadingText}>Crafting culinary menu…</Text>
+        </View>
+      );
+    }
   }
 
   if (error) {
