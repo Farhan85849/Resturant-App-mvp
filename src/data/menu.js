@@ -9,7 +9,8 @@ const menuItems = [
     description: 'Golden fried rolls stuffed with spiced vegetables and glass noodles.',
     price: 350,
     category: 'Starters',
-    image: 'https://images.unsplash.com/photo-1548946526-f69e2424cf45?auto=format&fit=crop&w=800&q=80',
+    // Crispy golden spring rolls with dipping sauce on dark plate
+    image: 'https://images.unsplash.com/photo-1534482421-64566f976cfa?auto=format&fit=crop&w=800&q=80',
     isSpecial: true,
     isAvailable: true,
   },
@@ -19,7 +20,8 @@ const menuItems = [
     description: 'Juicy marinated boneless chicken skewers served with mint chutney and greens.',
     price: 650,
     category: 'Starters',
-    image: 'https://images.unsplash.com/photo-1599488615731-7e5c2823ff28?auto=format&fit=crop&w=800&q=80',
+    // Grilled chicken tikka skewers with charred marks served on plate
+    image: 'https://images.unsplash.com/photo-1689530951865-ac55bab8e7ba?auto=format&fit=crop&w=800&q=80',
     isSpecial: false,
     isAvailable: true,
   },
@@ -29,7 +31,8 @@ const menuItems = [
     description: 'Artisan baguette toasted with herbed garlic butter, herbs, and melted cheese.',
     price: 220,
     category: 'Starters',
-    image: 'https://images.unsplash.com/photo-1619535860434-ba1d8fa12536?auto=format&fit=crop&w=800&q=80',
+    // Toasted garlic bread slices with melted mozzarella cheese
+    image: 'https://images.unsplash.com/photo-1573140247632-f8fd74997d5c?auto=format&fit=crop&w=800&q=80',
     isSpecial: false,
     isAvailable: true,
   },
@@ -39,7 +42,8 @@ const menuItems = [
     description: 'Minced beef kebabs seasoned with aromatic herbs and char-grilled on skewers.',
     price: 580,
     category: 'Starters',
-    image: 'https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?auto=format&fit=crop&w=800&q=80',
+    // Minced meat seekh kebabs on skewers with spices
+    image: 'https://images.unsplash.com/photo-1529042410759-befb1204b468?auto=format&fit=crop&w=800&q=80',
     isSpecial: true,
     isAvailable: false,
   },
@@ -51,7 +55,8 @@ const menuItems = [
     description: 'Tender tandoori chicken simmered in a velvet tomato, cashew, and fenugreek gravy.',
     price: 890,
     category: 'Mains',
-    image: 'https://images.unsplash.com/photo-1603894584373-5ac82b2ae398?auto=format&fit=crop&w=800&q=80',
+    // Creamy orange butter chicken curry in bowl with garnish
+    image: 'https://images.unsplash.com/photo-1588166524941-3bf61a9c41db?auto=format&fit=crop&w=800&q=80',
     isSpecial: true,
     isAvailable: true,
   },
@@ -61,6 +66,7 @@ const menuItems = [
     description: 'Aromatic long-grain basmati layered with tender beef, saffron, and crispy shallots.',
     price: 780,
     category: 'Mains',
+    // Aromatic biryani rice with meat and saffron in a pot overhead view
     image: 'https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?auto=format&fit=crop&w=800&q=80',
     isSpecial: false,
     isAvailable: true,
@@ -71,7 +77,8 @@ const menuItems = [
     description: 'Pan-seared sea bass with lemon garlic reduction, capers, and seasonal greens.',
     price: 1100,
     category: 'Mains',
-    image: 'https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?auto=format&fit=crop&w=800&q=80',
+    // Golden pan-seared fish fillet with lemon and herbs on plate
+    image: 'https://images.unsplash.com/photo-1467003909585-2f8a72700288?auto=format&fit=crop&w=800&q=80',
     isSpecial: false,
     isAvailable: true,
   },
@@ -81,6 +88,7 @@ const menuItems = [
     description: 'Black lentils and kidney beans slow-simmered overnight with cultured cream and butter.',
     price: 480,
     category: 'Mains',
+    // Creamy dark daal makhani lentils in black bowl with cream swirl
     image: 'https://images.unsplash.com/photo-1546833999-b9f581a1996d?auto=format&fit=crop&w=800&q=80',
     isSpecial: false,
     isAvailable: true,
@@ -91,7 +99,8 @@ const menuItems = [
     description: 'Al dente penne in a fiery San Marzano tomato sauce infused with chili and basil.',
     price: 620,
     category: 'Mains',
-    image: 'https://images.unsplash.com/photo-1608897013039-887f21d8c804?auto=format&fit=crop&w=800&q=80',
+    // Penne pasta in spicy red tomato arrabiata sauce with basil
+    image: 'https://images.unsplash.com/photo-1555949258-eb67b1ef0ceb?auto=format&fit=crop&w=800&q=80',
     isSpecial: false,
     isAvailable: true,
   },
@@ -103,6 +112,7 @@ const menuItems = [
     description: 'Golden caramelized milk dumplings soaked in saffron-cardamom scented syrup.',
     price: 220,
     category: 'Desserts',
+    // Brown gulab jamun dumplings in golden syrup with rose petals
     image: 'https://images.unsplash.com/photo-1601050690597-df0568f70950?auto=format&fit=crop&w=800&q=80',
     isSpecial: false,
     isAvailable: true,
@@ -113,7 +123,8 @@ const menuItems = [
     description: 'Rich Belgian chocolate sponge bursting with a warm ganache center and vanilla bean gelato.',
     price: 480,
     category: 'Desserts',
-    image: 'https://images.unsplash.com/photo-1606313564200-e75d5e30476c?auto=format&fit=crop&w=800&q=80',
+    // Molten chocolate lava cake with flowing ganache center and ice cream
+    image: 'https://images.unsplash.com/photo-1624353365286-3f8d62daad51?auto=format&fit=crop&w=800&q=80',
     isSpecial: true,
     isAvailable: true,
   },
@@ -123,7 +134,8 @@ const menuItems = [
     description: 'Traditional slow-reduced milk ice cream swirled with Alphonso mango pulp and pistachios.',
     price: 280,
     category: 'Desserts',
-    image: 'https://images.unsplash.com/photo-1570197788417-0e82375c9371?auto=format&fit=crop&w=800&q=80',
+    // Mango kulfi ice cream bars with pistachio on rustic surface
+    image: 'https://images.unsplash.com/photo-1587314168485-3236d6710814?auto=format&fit=crop&w=800&q=80',
     isSpecial: false,
     isAvailable: true,
   },
@@ -135,7 +147,8 @@ const menuItems = [
     description: 'Creamy sweet yogurt drink blended with ripe mangoes and cardamom seeds.',
     price: 250,
     category: 'Drinks',
-    image: 'https://images.unsplash.com/photo-1528750997573-59b89d56f4f7?auto=format&fit=crop&w=800&q=80',
+    // Bright yellow mango lassi in glass with mango slice garnish
+    image: 'https://images.unsplash.com/photo-1626201850129-a4a6f27a830b?auto=format&fit=crop&w=800&q=80',
     isSpecial: false,
     isAvailable: true,
   },
@@ -145,6 +158,7 @@ const menuItems = [
     description: 'Zesty lemon cooler crushed with garden fresh spearmint and Himalayan pink salt.',
     price: 180,
     category: 'Drinks',
+    // Chilled sparkling lemonade with fresh mint leaves and lemon slice
     image: 'https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?auto=format&fit=crop&w=800&q=80',
     isSpecial: false,
     isAvailable: true,
@@ -155,6 +169,7 @@ const menuItems = [
     description: '18-hour slow-steeped Arabica coffee served chilled over ice with oat milk.',
     price: 320,
     category: 'Drinks',
+    // Dark cold brew coffee over ice in glass with condensation
     image: 'https://images.unsplash.com/photo-1517701604599-bb29b565090c?auto=format&fit=crop&w=800&q=80',
     isSpecial: true,
     isAvailable: true,
@@ -165,7 +180,8 @@ const menuItems = [
     description: 'Heritage chilled Damascus rose essence drink garnished with sabja seeds.',
     price: 150,
     category: 'Drinks',
-    image: 'https://images.unsplash.com/photo-1546173159-315724a31696?auto=format&fit=crop&w=800&q=80',
+    // Deep pink rose sharbat drink with floral garnish in tall glass
+    image: 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=800&q=80',
     isSpecial: false,
     isAvailable: false,
   },
