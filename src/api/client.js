@@ -5,28 +5,11 @@
 import { Platform, NativeModules } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// Current Hotspot connected laptop IP
-const FALLBACK_IP = '10.235.2.131';
+// Live Production Backend URL (Hosted on Railway)
+const PRODUCTION_API_URL = 'https://resturant-app-mvp-production.up.railway.app';
 
 export const getBaseUrl = () => {
-  if (Platform.OS === 'web') {
-    if (typeof window !== 'undefined' && window.location?.hostname) {
-      return `http://${window.location.hostname}:5000`;
-    }
-    return 'http://localhost:5000';
-  }
-
-  // On physical mobile device with Expo Go:
-  // Extract host IP dynamically from Metro bundle scriptURL
-  const scriptURL = NativeModules.SourceCode?.scriptURL;
-  if (scriptURL) {
-    const host = scriptURL.split('://')[1]?.split('/')[0]?.split(':')[0];
-    if (host && host !== 'localhost' && host !== '127.0.0.1') {
-      return `http://${host}:5000`;
-    }
-  }
-
-  return `http://${FALLBACK_IP}:5000`;
+  return PRODUCTION_API_URL;
 };
 
 export const BASE_URL = getBaseUrl();
