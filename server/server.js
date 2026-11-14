@@ -21,6 +21,11 @@ app.use('/api/tables', require('./routes/tableRoutes'));
 app.use('/api/orders', require('./routes/orderRoutes'));
 app.use('/api/reservations', require('./routes/reservationRoutes'));
 
+// Root endpoint for deployment verification
+app.get('/', (req, res) => {
+  res.json({ message: 'Saveur Restaurant API is live!', status: 'ok', timestamp: new Date().toISOString() });
+});
+
 // Health check
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', time: new Date().toISOString() });
