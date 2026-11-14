@@ -84,34 +84,5 @@ d:\expo-app\
    npx expo start --web
    ```
 
----
-
-## 🔑 Seeded Demo Credentials
-
-| Role | Email | Password |
-| :--- | :--- | :--- |
-| **Customer** | `customer@demo.com` | `Customer1` |
-| **Manager** | `manager@demo.com` | `Manager1` |
 
 ---
-
-## 🌐 API Endpoint Summary
-
-| Method | Endpoint | Access | Description |
-| :--- | :--- | :--- | :--- |
-| `GET` | `/api/health` | Public | Server health status check |
-| `POST` | `/api/auth/register` | Public | Register new user account |
-| `POST` | `/api/auth/login` | Public | User login & JWT issuance |
-| `GET` | `/api/menu` | Public | List menu items (supports `?category=` and `?search=`) |
-| `GET` | `/api/menu/:id` | Public | Get menu item by ID |
-| `POST` | `/api/menu` | Manager | Add new menu item |
-| `PUT` | `/api/menu/:id` | Manager | Edit menu item price or availability |
-| `DELETE` | `/api/menu/:id` | Manager | Delete menu item |
-| `POST` | `/api/orders` | Customer | Place order (total calculated on server) |
-| `GET` | `/api/orders/my` | Customer | Fetch logged-in user's orders |
-| `GET` | `/api/orders` | Manager | Fetch all restaurant orders |
-| `PATCH` | `/api/orders/:id/status` | Manager | Update order status (Pending → Preparing → Ready → Served) |
-| `POST` | `/api/reservations` | Customer | Book table reservation (conflict & capacity checked) |
-| `GET` | `/api/reservations/my` | Customer | Fetch customer's reservations |
-| `GET` | `/api/reservations` | Manager | Fetch all restaurant reservations |
-| `PATCH` | `/api/reservations/:id` | Manager | Confirm, decline, or cancel reservation |
